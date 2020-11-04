@@ -10,7 +10,7 @@ layer= 'fc1000';
 kk=1;
 for ii=1:4
     
-    dbPath =  'K:\10_07_2020\TUBİTAK1512 Uygulamalar\GÖRÜNTÜLER\ticari\normal kamera\bölünmüş\t (';
+    dbPath =  '...\t (';
     d2= strcat(dbPath,num2str(ii),')');
     d1= dir(strcat(dbPath,num2str(ii),')'));
     xxx=length(d1)-2;
