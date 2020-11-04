@@ -72,7 +72,6 @@ labels_test=categorical(labels_test);
 
 inputSize = 1000;
 numHiddenUnits1 = 300;
-numHiddenUnits = 200;
 numClasses = 4;
 
 layers = [ ...
