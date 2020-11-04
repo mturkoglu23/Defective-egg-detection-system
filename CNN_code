@@ -1,0 +1,82 @@
+clc
+clear 
+
+% reset(gpuDevice(1));
+  
+net = densenet201;
+
+layer= 'fc1000';
+
+kk=1;
+for ii=1:4
+    
+    dbPath =  '...\t (';
+    d2= strcat(dbPath,num2str(ii),')');
+    d1= dir(strcat(dbPath,num2str(ii),')'));
+    xxx=length(d1)-2;
+    
+for imgIndex=1:xxx
+   imgIndex
+    d1= strcat(d2,'\a (',num2str(imgIndex),')\img (');
+    
+img=imread(strcat(d1, num2str(1),').jpg'));
+img1=imread(strcat(d1, num2str(2),').jpg'));
+img2=imread(strcat(d1, num2str(3),').jpg'));
+img3=imread(strcat(d1, num2str(4),').jpg'));
+img4=imread(strcat(d1, num2str(5),').jpg'));
+img5=imread(strcat(d1, num2str(6),').jpg'));
+
+img=imresize(img,[224 224]);
+img1=imresize(img1,[224 224]);
+img2=imresize(img2,[224 224]);
+img3=imresize(img3,[224 224]);
+img4=imresize(img4,[224 224]);
+img5=imresize(img5,[224 224]);
+
+   x(:,1) = activations(net,img,layer);
+   x1(:,1) = activations(net,img1,layer);
+   x2(:,1) = activations(net,img2,layer);
+   x3(:,1) = activations(net,img3,layer);
+   x4(:,1) = activations(net,img4,layer);
+   x5(:,1) = activations(net,img5,layer);
+
+   features=[x;x1;x2;x3;x4;x5]';
+   Feats(:,kk)=features;
+   
+   H(kk,1)=ii;
+   kk=kk+1;
+end
+
+end
+
+featuresTrain=Feats';
+YTrain=H;
+
+total_number = 400;
+percent=0.70;
+tt=round(percent*total_number);
+WP =featuresTrain;
+WT=double(YTrain);
+[rr]=randperm(total_number);
+Trn(1:tt,:)   = WP(rr(1:tt),:);
+Trn_label(1:tt,:)   = WT(rr(1:tt),:);
+
+Test= WP(rr(tt+1:end),:);
+Tst_label= WT(rr(tt+1:end),:);
+
+
+featuresTrain=Trn;
+YTrain=double(Trn_label);
+featuresTest=Test;
+YTest=double(Tst_label);
+template = templateSVM(...
+    'KernelFunction', 'polynomial', ...
+    'PolynomialOrder', 3, ...
+    'KernelScale', 'auto', ...
+    'BoxConstraint', 1, ...
+    'Standardize', true);
+classifier = fitcecoc(featuresTrain,YTrain,...
+    'Learners', template,...
+    'Coding', 'onevsall');
+YPred = predict(classifier,featuresTest);
+acc = mean(YPred == YTest)
