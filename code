@@ -1,0 +1,98 @@
+clc
+clear 
+
+reset(gpuDevice(1));
+  
+net = densenet201;
+layer= 'fc1000';
+
+%%
+kk=1;
+for ii=1:4
+    
+    dbPath =  'K:\10_07_2020\TUBİTAK1512 Uygulamalar\GÖRÜNTÜLER\ticari\normal kamera\bölünmüş\t (';
+    d2= strcat(dbPath,num2str(ii),')');
+    d1= dir(strcat(dbPath,num2str(ii),')'));
+    xxx=length(d1)-2;
+    
+for imgIndex=1:xxx
+   imgIndex
+    d1= strcat(d2,'\a (',num2str(imgIndex),')\img (');
+    
+img=imread(strcat(d1, num2str(1),').jpg'));
+img1=imread(strcat(d1, num2str(2),').jpg'));
+img2=imread(strcat(d1, num2str(3),').jpg'));
+img3=imread(strcat(d1, num2str(4),').jpg'));
+img4=imread(strcat(d1, num2str(5),').jpg'));
+img5=imread(strcat(d1, num2str(6),').jpg'));
+
+img=imresize(img,[224 224]);
+img1=imresize(img1,[224 224]);
+img2=imresize(img2,[224 224]);
+img3=imresize(img3,[224 224]);
+img4=imresize(img4,[224 224]);
+img5=imresize(img5,[224 224]);
+
+   x(:,1) = activations(net,img,layer);
+   x1(:,1) = activations(net,img1,layer);
+   x2(:,1) = activations(net,img2,layer);
+   x3(:,1)= activations(net,img3,layer);
+   x4(:,1) = activations(net,img4,layer);
+   x5(:,1) = activations(net,img5,layer);
+
+   features=[x,x1,x2,x3,x4,x5]';
+   Feats{kk}=features;
+   
+   H(kk,1)=ii;
+   kk=kk+1;
+end
+
+end
+
+for i=1:400
+   Feats{i}=Feats{i}';
+end
+ 
+
+labels=H;
+num=numel(Feats);
+idx=randperm(num);
+N=floor(0.7*num);
+
+idx_train=idx(1:N);
+Feats_train=Feats(idx_train);
+labels_train=labels(idx_train);
+
+idx_test=idx(N+1:end);
+Feats_test=Feats(idx_test);
+labels_test=labels(idx_test);
+
+labels_train=categorical(labels_train);
+labels_test=categorical(labels_test);
+
+inputSize = 1000;
+numHiddenUnits1 = 300;
+numHiddenUnits = 200;
+numClasses = 4;
+
+layers = [ ...
+    sequenceInputLayer(inputSize)
+    bilstmLayer(numHiddenUnits1,'OutputMode','last')
+    reluLayer
+    dropoutLayer
+    fullyConnectedLayer(numClasses,'Name','fc')
+    softmaxLayer
+    classificationLayer];
+
+options = trainingOptions('adam',...
+         'MaxEpochs',60,...  
+        'MiniBatchSize',20,...
+      'InitialLearnRate',1e-4,...
+       'GradientThreshold',1, ...
+    'Plots','training-progress', ...
+    'Verbose',false);
+
+net = trainNetwork(Feats_train,labels_train,layers,options);
+
+YPred = classify(net,Feats_test);
+accuracy = mean(YPred == labels_test)
